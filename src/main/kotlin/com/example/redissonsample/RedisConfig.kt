@@ -1,18 +1,12 @@
 package com.example.redissonsample
 
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.MapperFeature
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator
-import com.fasterxml.jackson.databind.jsontype.impl.StdTypeResolverBuilder
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import org.redisson.QueueTransferService
 import org.redisson.Redisson
 import org.redisson.api.RMap
 import org.redisson.api.RedissonClient
+import org.redisson.client.codec.StringCodec
 import org.redisson.codec.TypedJsonJacksonCodec
 import org.redisson.config.Config
 import org.springframework.context.annotation.Bean
@@ -20,7 +14,6 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories
-import java.io.IOException
 
 
 @Configuration
@@ -45,6 +38,10 @@ class RedisConfig(
         return jacksonObjectMapper()
     }
 
+    @Bean
+    fun customDelayedQueue(redissonClient: RedissonClient): CustomDelayedQueue<String> {
+        return (redissonClient as Redisson).getCustomDelayedQueue("deQueue")
+    }
 
     @Bean
     fun userCache(redissonClient: RedissonClient, objectMapper: ObjectMapper): RMap<String, User> {
