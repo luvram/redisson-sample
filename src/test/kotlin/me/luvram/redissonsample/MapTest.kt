@@ -1,4 +1,4 @@
-package com.example.redissonsample
+package me.luvram.redissonsample
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -17,7 +17,7 @@ class MapTest @Autowired constructor(
         // given
         val name = "ram"
         val age = 1
-        userCache["test"] = User(name, age)
+        userCache["test"] = User("1", name, age)
 
         // when
         val user: User = userCache["test"] ?: throw IllegalAccessError()

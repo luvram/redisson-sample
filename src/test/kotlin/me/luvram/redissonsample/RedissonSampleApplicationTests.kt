@@ -1,4 +1,4 @@
-package com.example.redissonsample
+package me.luvram.redissonsample
 
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest

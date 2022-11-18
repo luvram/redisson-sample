@@ -1,8 +1,7 @@
-package com.example.redissonsample
+package me.luvram.redissonsample
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Profile
 import redis.embedded.RedisServer
 import java.io.IOException
 import javax.annotation.PostConstruct
@@ -16,20 +15,20 @@ class EmbeddedRedisConfig {
 
     private var redisServer: RedisServer? = null
 
-    @PostConstruct
-    @Throws(IOException::class)
-    fun redisServer() {
-        redisServer = RedisServer.builder()
-            .port(redisPort)
-            .build()
+//    @PostConstruct
+//    @Throws(IOException::class)
+//    fun redisServer() {
+//        redisServer = RedisServer.builder()
+//            .port(redisPort)
+//            .build()
+//
+//        redisServer!!.start()
+//    }
 
-        redisServer!!.start()
-    }
-
-    @PreDestroy
-    fun stopRedis() {
-        if (redisServer != null) {
-            redisServer!!.stop()
-        }
-    }
+//    @PreDestroy
+//    fun stopRedis() {
+//        if (redisServer != null) {
+//            redisServer!!.stop()
+//        }
+//    }
 }

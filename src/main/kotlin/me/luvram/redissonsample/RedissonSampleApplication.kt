@@ -1,4 +1,4 @@
-package com.example.redissonsample
+package me.luvram.redissonsample
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties

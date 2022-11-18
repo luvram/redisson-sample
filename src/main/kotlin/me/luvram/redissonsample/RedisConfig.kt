@@ -1,23 +1,27 @@
-package com.example.redissonsample
+package me.luvram.redissonsample
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.redisson.QueueTransferService
 import org.redisson.Redisson
+import org.redisson.api.RList
 import org.redisson.api.RMap
 import org.redisson.api.RedissonClient
 import org.redisson.client.codec.StringCodec
 import org.redisson.codec.TypedJsonJacksonCodec
 import org.redisson.config.Config
+import org.redisson.spring.transaction.RedissonTransactionManager
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories
+import org.springframework.transaction.annotation.EnableTransactionManagement
 
 
 @Configuration
 @EnableRedisRepositories
+@EnableTransactionManagement // transaction 활성화
 class RedisConfig(
     val redisProperties: RedisProperties
 ) {
@@ -25,12 +29,17 @@ class RedisConfig(
     @Bean
     fun redisConnectionFactory(): RedisConnectionFactory = LettuceConnectionFactory(redisProperties.host, redisProperties.port)
 
-    @Bean
+    @Bean(destroyMethod="shutdown")
     fun redissonClient(): RedissonClient {
         val config = Config().apply {
             this.useSingleServer().address = "redis://${redisProperties.host}:${redisProperties.port}"
         }
         return Redisson.create(config)
+    }
+
+    @Bean
+    fun transactionManager(redissonClient: RedissonClient): RedissonTransactionManager {
+        return RedissonTransactionManager(redissonClient)
     }
 
     @Bean
@@ -45,7 +54,13 @@ class RedisConfig(
 
     @Bean
     fun userCache(redissonClient: RedissonClient, objectMapper: ObjectMapper): RMap<String, User> {
-        return redissonClient.getMap("TEST", TypedJsonJacksonCodec(User::class.java, User::class.java, objectMapper))
+        return redissonClient.getMap("USER", TypedJsonJacksonCodec(User::class.java, User::class.java, objectMapper))
+    }
+
+
+    @Bean
+    fun userIndex(redissonClient: RedissonClient, objectMapper: ObjectMapper): RList<String> {
+        return redissonClient.getList("USER-INDEX")
     }
 
 }

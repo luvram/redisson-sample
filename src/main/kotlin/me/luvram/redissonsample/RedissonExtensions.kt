@@ -1,4 +1,4 @@
-package com.example.redissonsample
+package me.luvram.redissonsample
 
 import org.redisson.Redisson
 
