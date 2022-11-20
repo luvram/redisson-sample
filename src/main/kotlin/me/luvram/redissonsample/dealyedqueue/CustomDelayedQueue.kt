@@ -1,4 +1,4 @@
-package me.luvram.redissonsample
+package me.luvram.redissonsample.dealyedqueue
 
 import org.redisson.QueueTransferService
 import org.redisson.QueueTransferTask

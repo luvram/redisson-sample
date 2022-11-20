@@ -12,7 +12,7 @@ class TransactionTest @Autowired constructor(
 ) {
     @Test
     fun `transaction`() {
-        service.saveUser(User("id-1", "name-1", 1))
+        service.saveUserTransaction(User("id-1", "name-1", 1))
     }
 
     @Test
@@ -22,6 +22,6 @@ class TransactionTest @Autowired constructor(
 
     @Test
     fun `multi lock`() {
-        service.saveUserWithLock(User("id-3", "name-3", 3))
+        service.saveUserMultiLock(User("id-3", "name-3", 3))
     }
 }

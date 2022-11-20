@@ -2,12 +2,11 @@ package me.luvram.redissonsample
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import org.redisson.QueueTransferService
+import me.luvram.redissonsample.dealyedqueue.CustomDelayedQueue
 import org.redisson.Redisson
 import org.redisson.api.RList
 import org.redisson.api.RMap
 import org.redisson.api.RedissonClient
-import org.redisson.client.codec.StringCodec
 import org.redisson.codec.TypedJsonJacksonCodec
 import org.redisson.config.Config
 import org.redisson.spring.transaction.RedissonTransactionManager
@@ -51,16 +50,4 @@ class RedisConfig(
     fun customDelayedQueue(redissonClient: RedissonClient): CustomDelayedQueue<String> {
         return (redissonClient as Redisson).getCustomDelayedQueue("deQueue")
     }
-
-    @Bean
-    fun userCache(redissonClient: RedissonClient, objectMapper: ObjectMapper): RMap<String, User> {
-        return redissonClient.getMap("USER", TypedJsonJacksonCodec(User::class.java, User::class.java, objectMapper))
-    }
-
-
-    @Bean
-    fun userIndex(redissonClient: RedissonClient, objectMapper: ObjectMapper): RList<String> {
-        return redissonClient.getList("USER-INDEX")
-    }
-
 }

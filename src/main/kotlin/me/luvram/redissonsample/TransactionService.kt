@@ -28,7 +28,7 @@ class TransactionService(
 
     private val codec = TypedJsonJacksonCodec(User::class.java, User::class.java, objectMapper)
 
-    fun saveUser(user: User) {
+    fun saveUserTransaction(user: User) {
         val transaction: RTransaction = client.createTransaction(TransactionOptions.defaults())
 
         val userCache: RMap<String, User> = transaction.getMap("USER", codec)
@@ -41,22 +41,22 @@ class TransactionService(
     }
 
     fun saveUserBatch(user: User) {
-        // IN_MEMORY_ATOMIC
-        val batchOption = BatchOptions.defaults().executionMode(ExecutionMode.IN_MEMORY_ATOMIC)
+
+        val batchOption = BatchOptions.defaults().executionMode(ExecutionMode.REDIS_WRITE_ATOMIC)
         val batch = client.createBatch(batchOption)
 
         val userCache = batch.getMap<String, User>(USER, codec)
-        userCache.putAsync(user.id, user)
-
         val heartbeat = batch.getScoredSortedSet<String>("USER-HEARTBEAT-BATCH")
+
+        userCache.putAsync(user.id, user)
         heartbeat.addAsync(Instant.now().toEpochMilli().toDouble(), user.id)
 
         val res = batch.execute()
 
-//        res.responses
+        res.responses
     }
 
-    fun saveUserWithLock(user: User) {
+    fun saveUserMultiLock(user: User) {
         val userCache: RMap<String, User> = client.getMap(USER, codec)
         val heartbeat = client.getSet<String>("USER-HEARTBEAT")
 
