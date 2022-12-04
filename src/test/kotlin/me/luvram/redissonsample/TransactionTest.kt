@@ -34,6 +34,11 @@ class TransactionTest @Autowired constructor(
     @Test
     fun `redisson transactional`() {
         service.saveUserTransactional(User("id-5", "name-5", 5))
-
     }
+
+    @Test
+    fun `redisson batch manager`() {
+        service.saveUserBatchManager(User("id-6", "name-6", 6))
+    }
+
 }

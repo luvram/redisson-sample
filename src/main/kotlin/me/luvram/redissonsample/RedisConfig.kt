@@ -2,6 +2,7 @@ package me.luvram.redissonsample
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import me.luvram.redissonsample.batch.RedissonBatchManager
 import me.luvram.redissonsample.dealyedqueue.CustomDelayedQueue
 import org.redisson.Redisson
 import org.redisson.api.RedissonClient
@@ -43,6 +44,11 @@ class RedisConfig(
 //    fun transactionManager(redissonClient: RedissonClient): CustomTransactionManager {
 //        return CustomTransactionManager(redissonClient)
 //    }
+
+    @Bean
+    fun redissonBatchManager(redisson: RedissonClient): RedissonBatchManager {
+        return RedissonBatchManager(redisson)
+    }
 
     @Bean
     fun objectMapper(): ObjectMapper {

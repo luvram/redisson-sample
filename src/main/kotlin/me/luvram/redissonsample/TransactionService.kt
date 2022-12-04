@@ -1,6 +1,7 @@
 package me.luvram.redissonsample
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import me.luvram.redissonsample.batch.RedissonBatchManager
 import org.apache.juli.logging.LogFactory
 import org.redisson.api.BatchOptions
 import org.redisson.api.BatchOptions.ExecutionMode
@@ -20,6 +21,7 @@ import java.util.concurrent.TimeUnit
 class TransactionService(
 //    val transactionManager: CustomTransactionManager,
     val transactionManager: RedissonTransactionManager,
+    val redissonBatchMapper: RedissonBatchManager,
     val client: RedissonClient,
     val objectMapper: ObjectMapper
 ) {
@@ -49,7 +51,6 @@ class TransactionService(
 
         val userCache = batch.getMap<String, User>(USER, codec)
         val heartbeat = batch.getScoredSortedSet<String>("USER-HEARTBEAT-BATCH")
-        batch.getScript()
 
         userCache.putAsync(user.id, user)
         heartbeat.addAsync(Instant.now().toEpochMilli().toDouble(), user.id)
@@ -102,6 +103,18 @@ class TransactionService(
 
         userCache[user.id] = user
         heartbeat.add(user.id)
+    }
 
+
+    fun saveUserBatchManager(user: User) = redissonBatchMapper.transaction(listOf(client.getLock("user.${user.id}"))) { batch ->
+        val userCache = batch.getMap<String, User>(USER, codec)
+        userCache.putAsync(user.id, user)
+        saveUserHeartbeat(user)
+    }
+
+    fun saveUserHeartbeat(user: User) {
+        val batch = redissonBatchMapper.getCurrentBatch()
+        val heartbeat = batch.getScoredSortedSet<String>("USER-HEARTBEAT-BATCH")
+        heartbeat.addAsync(Instant.now().toEpochMilli().toDouble(), user.id)
     }
 }
