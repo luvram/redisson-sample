@@ -4,10 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import me.luvram.redissonsample.dealyedqueue.CustomDelayedQueue
 import org.redisson.Redisson
-import org.redisson.api.RList
-import org.redisson.api.RMap
 import org.redisson.api.RedissonClient
-import org.redisson.codec.TypedJsonJacksonCodec
 import org.redisson.config.Config
 import org.redisson.spring.transaction.RedissonTransactionManager
 import org.springframework.context.annotation.Bean
@@ -36,10 +33,16 @@ class RedisConfig(
         return Redisson.create(config)
     }
 
+
     @Bean
-    fun transactionManager(redissonClient: RedissonClient): RedissonTransactionManager {
-        return RedissonTransactionManager(redissonClient)
+    fun transactionManager(redisson: RedissonClient): RedissonTransactionManager {
+        return RedissonTransactionManager(redisson)
     }
+
+//    @Bean
+//    fun transactionManager(redissonClient: RedissonClient): CustomTransactionManager {
+//        return CustomTransactionManager(redissonClient)
+//    }
 
     @Bean
     fun objectMapper(): ObjectMapper {

@@ -11,12 +11,14 @@ import org.redisson.api.TransactionOptions
 import org.redisson.codec.TypedJsonJacksonCodec
 import org.redisson.spring.transaction.RedissonTransactionManager
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 
 @Service
 class TransactionService(
+//    val transactionManager: CustomTransactionManager,
     val transactionManager: RedissonTransactionManager,
     val client: RedissonClient,
     val objectMapper: ObjectMapper
@@ -47,6 +49,7 @@ class TransactionService(
 
         val userCache = batch.getMap<String, User>(USER, codec)
         val heartbeat = batch.getScoredSortedSet<String>("USER-HEARTBEAT-BATCH")
+        batch.getScript()
 
         userCache.putAsync(user.id, user)
         heartbeat.addAsync(Instant.now().toEpochMilli().toDouble(), user.id)
@@ -80,7 +83,25 @@ class TransactionService(
         }
     }
 
-    fun saveUserWith(user: User) {
+//    @Transactional
+//    fun saveUserCustomTransaction(user: User) {
+//        val transaction = transactionManager.getCurrentTransaction()
+//
+//        val userCache = transaction.getMap<String, User>(USER, codec)
+//        val heartbeat = transaction.getScoredSortedSet<String>("USER-HEARTBEAT-BATCH")
+//
+//        userCache.putAsync(user.id, user)
+//        heartbeat.addAsync(Instant.now().toEpochMilli().toDouble(), user.id)
+//    }
+
+    @Transactional
+    fun saveUserTransactional(user: User) {
+        val transaction = transactionManager.currentTransaction
+        val userCache: RMap<String, User> = transaction.getMap("USER", codec)
+        val heartbeat = transaction.getSet<String>("USER-HEARTBEAT")
+
+        userCache[user.id] = user
+        heartbeat.add(user.id)
 
     }
 }
