@@ -1,11 +1,80 @@
 package me.luvram.redissonsample.batch
 
-import org.junit.jupiter.api.Assertions.*
+import me.luvram.redissonsample.User
+import me.luvram.redissonsample.writer.HeartbeatWriter
+import me.luvram.redissonsample.writer.UserWriter
+import org.amshove.kluent.`should be equal to`
+import org.amshove.kluent.`should not be null`
+import org.junit.jupiter.api.Test
+import org.redisson.api.RedissonClient
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
+import java.time.Instant
+import java.util.Random
+import java.util.UUID
 
-internal class RedissonBatchManagerTest {
-    // lock 이 하나일때 체크
-    // lock이 여러개일 때 체크
-    // 동시에 여러 스레드에서 사용하여도 에러 없는지, 배치가 서로 간섭되지는 않는지 체크
-    // block에서 그냥 리턴했을때도 리소스가 해제되는지 체크
-    // 에러났을 때 discard가 제대로 되는지 체크
+@ActiveProfiles("develop", "test")
+@SpringBootTest
+internal class RedissonBatchManagerTest @Autowired constructor(
+    private val client: RedissonClient,
+    private val batch: RedissonBatchManager,
+    private val userWriter: UserWriter,
+    private val heartbeatWriter: HeartbeatWriter
+) {
+    @Test
+    fun `runMulti should success if input is single lock`() {
+        val user = User(UUID.randomUUID().toString(), "name1", 1)
+        val userCache = userWriter.getCache()
+        batch.runMulti(userCache.getLock(user.name)) { batch ->
+            val userBatchCache = userWriter.getBatchCache()
+            userBatchCache.putAsync(user.id, user)
+        }
+
+        userCache[user.id].`should not be null`()
+    }
+
+    @Test
+    fun `runMulti should success if input is mult lock`() {
+        val user = User(UUID.randomUUID().toString(), "name2", 2)
+        val userCache = userWriter.getCache()
+        val heartbeatCache = heartbeatWriter.getCache()
+        batch.runMulti(userCache.getLock(user.name)) { batch ->
+            val userBatchCache = userWriter.getBatchCache()
+            val heartbeatBatchCache = heartbeatWriter.getBatchCache()
+            userBatchCache.putAsync(user.id, user)
+            heartbeatBatchCache.addAsync(Instant.now().toEpochMilli().toDouble(), user.id)
+        }
+
+        userCache[user.id].`should not be null`()
+        heartbeatCache.getScore(user.id).`should not be null`()
+    }
+
+    @Test
+    fun `runMulti should discard if input block throws error`() {
+        // given
+        // when
+        // then
+    }
+
+    @Test
+    fun `runMulti should doCleanupAfterCompletion if input block return and jumps`() {
+        // given
+        // when
+        // then
+    }
+
+    @Test
+    fun `runMulti should use same batch in other runMulti`() {
+        // given
+        // when
+        // then
+    }
+
+    @Test
+    fun `runMulti should be atomic while another runMulti i run on the other thread`() {
+        // given
+        // when
+        // then
+    }
 }

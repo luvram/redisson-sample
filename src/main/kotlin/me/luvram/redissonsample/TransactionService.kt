@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 class TransactionService(
 //    val transactionManager: CustomTransactionManager,
     val transactionManager: RedissonTransactionManager,
-    val redissonBatchMapper: RedissonBatchManager,
+    val batchManager: RedissonBatchManager,
     val client: RedissonClient,
     val objectMapper: ObjectMapper
 ) {
@@ -106,14 +106,14 @@ class TransactionService(
     }
 
 
-    fun saveUserBatchManager(user: User) = redissonBatchMapper.transaction(listOf(client.getLock("user.${user.id}"))) { batch ->
+    fun saveUserBatchManager(user: User) = batchManager.runMulti(client.getLock("user.${user.id}")) { batch ->
         val userCache = batch.getMap<String, User>(USER, codec)
         userCache.putAsync(user.id, user)
         saveUserHeartbeat(user)
     }
 
     fun saveUserHeartbeat(user: User) {
-        val batch = redissonBatchMapper.getCurrentBatch()
+        val batch = batchManager.getCurrentBatch()
         val heartbeat = batch.getScoredSortedSet<String>("USER-HEARTBEAT-BATCH")
         heartbeat.addAsync(Instant.now().toEpochMilli().toDouble(), user.id)
     }

@@ -20,8 +20,8 @@ class RedissonBatchManager(
         val log = LogFactory.getLog(this.javaClass)
     }
 
-    fun <T> transaction(locks: List<RLock>, block: (batch: RBatch) -> T): T {
-        val multiLock = client.getMultiLock(*locks.toTypedArray())
+    fun <T> runMulti(vararg locks: RLock, block: (batch: RBatch) -> T): T {
+        val multiLock = client.getMultiLock(*locks)
 
         if (multiLock.tryLock(1000, TimeUnit.MILLISECONDS)) {
             val batch = doGetBatch()
@@ -29,10 +29,10 @@ class RedissonBatchManager(
                 doBegin(batch)
                 val holder = batch.batchHolder ?: throw TransactionSystemException("batch is not exist")
                 val result = block(holder.batch)
-                doCommit(batch)
+                doExecute(batch)
                 return result
             } catch (e: Exception) {
-                doRollback(batch)
+                doDiscard(batch)
             } finally {
                 log.debug { "unlock" }
                 doCleanupAfterCompletion(batch)
@@ -67,7 +67,7 @@ class RedissonBatchManager(
         }
     }
 
-    private fun doCommit(batchObject: CustomBatchObject) {
+    private fun doExecute(batchObject: CustomBatchObject) {
         log.debug("doCommit")
         try {
             val holder = batchObject.batchHolder ?: throw TransactionSystemException("batch is not exist")
@@ -79,7 +79,7 @@ class RedissonBatchManager(
 
     }
 
-    private fun doRollback(batchObject: CustomBatchObject) {
+    private fun doDiscard(batchObject: CustomBatchObject) {
         log.debug("doRollback")
         try {
             val holder = batchObject.batchHolder ?: throw TransactionSystemException("batch is not exist")
