@@ -3,13 +3,18 @@ package me.luvram.redissonsample.batch
 import me.luvram.redissonsample.User
 import me.luvram.redissonsample.writer.HeartbeatWriter
 import me.luvram.redissonsample.writer.UserWriter
+import org.amshove.kluent.invoking
+import org.amshove.kluent.should
 import org.amshove.kluent.`should be equal to`
+import org.amshove.kluent.`should be null`
 import org.amshove.kluent.`should not be null`
+import org.amshove.kluent.`should throw`
 import org.junit.jupiter.api.Test
 import org.redisson.api.RedissonClient
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.transaction.NoTransactionException
 import java.time.Instant
 import java.util.Random
 import java.util.UUID
@@ -32,6 +37,7 @@ internal class RedissonBatchManagerTest @Autowired constructor(
         }
 
         userCache[user.id].`should not be null`()
+        invoking { batch.getCurrentBatch() } `should throw` NoTransactionException::class
     }
 
     @Test
@@ -48,20 +54,27 @@ internal class RedissonBatchManagerTest @Autowired constructor(
 
         userCache[user.id].`should not be null`()
         heartbeatCache.getScore(user.id).`should not be null`()
+        invoking { batch.getCurrentBatch() } `should throw` NoTransactionException::class
     }
 
     @Test
     fun `runMulti should discard if input block throws error`() {
-        // given
-        // when
-        // then
-    }
+        val user = User(UUID.randomUUID().toString(), "name2", 2)
+        val userCache = userWriter.getCache()
+        val heartbeatCache = heartbeatWriter.getCache()
+        invoking {
+            batch.runMulti(userCache.getLock(user.name)) { batch ->
+                val userBatchCache = userWriter.getBatchCache()
+                val heartbeatBatchCache = heartbeatWriter.getBatchCache()
+                userBatchCache.putAsync(user.id, user)
+                heartbeatBatchCache.addAsync(Instant.now().toEpochMilli().toDouble(), user.id)
+                throw Exception()
+            }
+        } `should throw` Exception::class
 
-    @Test
-    fun `runMulti should doCleanupAfterCompletion if input block return and jumps`() {
-        // given
-        // when
-        // then
+        userCache[user.id].`should be null`()
+        heartbeatCache.getScore(user.id).`should be null`()
+        invoking { batch.getCurrentBatch() } `should throw` NoTransactionException::class
     }
 
     @Test
