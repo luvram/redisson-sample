@@ -19,8 +19,6 @@ import java.util.concurrent.TimeUnit
 
 @Service
 class TransactionService(
-//    val transactionManager: CustomTransactionManager,
-    val transactionManager: RedissonTransactionManager,
     val batchManager: RedissonBatchManager,
     val client: RedissonClient,
     val objectMapper: ObjectMapper
@@ -36,7 +34,7 @@ class TransactionService(
         val transaction: RTransaction = client.createTransaction(TransactionOptions.defaults())
 
         val userCache: RMap<String, User> = transaction.getMap("USER", codec)
-        val heartbeat = transaction.getSet<String>("USER-HEARTBEAT")
+        val heartbeat = transaction.getSet<String>("USER-HEARTBEAT-STRING")
 
         userCache[user.id] = user
         heartbeat.add(user.id)
@@ -62,7 +60,7 @@ class TransactionService(
 
     fun saveUserMultiLock(user: User) {
         val userCache: RMap<String, User> = client.getMap(USER, codec)
-        val heartbeat = client.getSet<String>("USER-HEARTBEAT")
+        val heartbeat = client.getSet<String>("USER-HEARTBEAT-STRING")
 
         val userLock = userCache.getLock(user.id)
         val heartbeatLock = heartbeat.getLock(user.id)
@@ -83,28 +81,6 @@ class TransactionService(
             log.warn { "Fail to get lock" }
         }
     }
-
-//    @Transactional
-//    fun saveUserCustomTransaction(user: User) {
-//        val transaction = transactionManager.getCurrentTransaction()
-//
-//        val userCache = transaction.getMap<String, User>(USER, codec)
-//        val heartbeat = transaction.getScoredSortedSet<String>("USER-HEARTBEAT-BATCH")
-//
-//        userCache.putAsync(user.id, user)
-//        heartbeat.addAsync(Instant.now().toEpochMilli().toDouble(), user.id)
-//    }
-
-    @Transactional
-    fun saveUserTransactional(user: User) {
-        val transaction = transactionManager.currentTransaction
-        val userCache: RMap<String, User> = transaction.getMap("USER", codec)
-        val heartbeat = transaction.getSet<String>("USER-HEARTBEAT")
-
-        userCache[user.id] = user
-        heartbeat.add(user.id)
-    }
-
 
     fun saveUserBatchManager(user: User) = batchManager.runMulti(client.getLock("user.${user.id}")) { batch ->
         val userCache = batch.getMap<String, User>(USER, codec)

@@ -25,6 +25,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("it.ozimov:embedded-redis:0.7.2")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    testImplementation("org.testcontainers:testcontainers:1.17.6")
     testImplementation("org.amshove.kluent:kluent:1.72")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }

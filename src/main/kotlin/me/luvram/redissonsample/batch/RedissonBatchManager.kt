@@ -24,22 +24,30 @@ class RedissonBatchManager(
         val multiLock = client.getMultiLock(*locks)
 
         if (multiLock.tryLock(1000, TimeUnit.MILLISECONDS)) {
-            val batch = doGetBatch()
             try {
-                doBegin(batch)
-                val holder = batch.batchHolder ?: throw TransactionSystemException("batch is not exist")
-                val result = block(holder.batch)
-                doExecute(batch)
-                return result
-            } catch (e: Exception) {
-                doDiscard(batch)
+                return runMulti(block)
             } finally {
-                log.debug { "unlock" }
-                doCleanupAfterCompletion(batch)
                 multiLock.unlock()
             }
         } else {
             log.warn { "Fail to get lock" }
+        }
+
+        throw TransactionSystemException("something wrong")
+    }
+
+    fun <T> runMulti(block: (batch: RBatch) -> T): T {
+        val batch = doGetBatch()
+        try {
+            doBegin(batch)
+            val holder = batch.batchHolder ?: throw TransactionSystemException("batch is not exist")
+            val result = block(holder.batch)
+            doExecute(batch)
+            return result
+        } catch (e: Exception) {
+            doDiscard(batch)
+        } finally {
+            doCleanupAfterCompletion(batch)
         }
 
         throw TransactionSystemException("something wrong")

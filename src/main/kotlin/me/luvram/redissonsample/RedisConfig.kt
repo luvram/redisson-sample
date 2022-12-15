@@ -4,12 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import me.luvram.redissonsample.batch.RedissonBatchManager
 import me.luvram.redissonsample.dealyedqueue.CustomDelayedQueue
+import me.luvram.redissonsample.springtransaction.CustomTransactionManager
 import org.redisson.Redisson
 import org.redisson.api.RedissonClient
 import org.redisson.config.Config
 import org.redisson.spring.transaction.RedissonTransactionManager
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Primary
 import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories
@@ -34,16 +36,10 @@ class RedisConfig(
         return Redisson.create(config)
     }
 
-
     @Bean
-    fun transactionManager(redisson: RedissonClient): RedissonTransactionManager {
-        return RedissonTransactionManager(redisson)
+    fun customTransactionManager(redissonClient: RedissonClient): CustomTransactionManager {
+        return CustomTransactionManager(redissonClient)
     }
-
-//    @Bean
-//    fun transactionManager(redissonClient: RedissonClient): CustomTransactionManager {
-//        return CustomTransactionManager(redissonClient)
-//    }
 
     @Bean
     fun redissonBatchManager(redisson: RedissonClient): RedissonBatchManager {

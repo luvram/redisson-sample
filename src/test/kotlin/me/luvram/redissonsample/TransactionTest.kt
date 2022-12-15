@@ -25,17 +25,6 @@ class TransactionTest @Autowired constructor(
         service.saveUserMultiLock(User("id-3", "name-3", 3))
     }
 
-//    @Test
-//    fun `custom transaction`() {
-//        service.saveUserCustomTransaction(User("id-4", "name-4", 4))
-//
-//    }
-
-    @Test
-    fun `redisson transactional`() {
-        service.saveUserTransactional(User("id-5", "name-5", 5))
-    }
-
     @Test
     fun `redisson batch manager`() {
         service.saveUserBatchManager(User("id-6", "name-6", 6))

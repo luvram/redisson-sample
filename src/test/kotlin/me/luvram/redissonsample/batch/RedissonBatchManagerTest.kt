@@ -27,7 +27,7 @@ internal class RedissonBatchManagerTest @Autowired constructor(
     private val userWriter: UserWriter,
     private val heartbeatWriter: HeartbeatWriter
 ) {
-    @Test
+//    @Test
     fun `runMulti should success if input is single lock`() {
         val user = User(UUID.randomUUID().toString(), "name1", 1)
         val userCache = userWriter.getCache()
@@ -40,7 +40,7 @@ internal class RedissonBatchManagerTest @Autowired constructor(
         invoking { batch.getCurrentBatch() } `should throw` NoTransactionException::class
     }
 
-    @Test
+//    @Test
     fun `runMulti should success if input is mult lock`() {
         val user = User(UUID.randomUUID().toString(), "name2", 2)
         val userCache = userWriter.getCache()
@@ -57,7 +57,7 @@ internal class RedissonBatchManagerTest @Autowired constructor(
         invoking { batch.getCurrentBatch() } `should throw` NoTransactionException::class
     }
 
-    @Test
+//    @Test
     fun `runMulti should discard if input block throws error`() {
         val user = User(UUID.randomUUID().toString(), "name2", 2)
         val userCache = userWriter.getCache()
@@ -77,11 +77,21 @@ internal class RedissonBatchManagerTest @Autowired constructor(
         invoking { batch.getCurrentBatch() } `should throw` NoTransactionException::class
     }
 
-    @Test
-    fun `runMulti should use same batch in other runMulti`() {
-        // given
-        // when
-        // then
+//    @Test
+    fun `runMulti should use same batch in nested runMulti`() {
+        val user = User(UUID.randomUUID().toString(), "name2", 2)
+        val userCache = userWriter.getCache()
+
+        batch.runMulti(userCache.getLock(user.name)) {
+            val batch1 = batch.getCurrentBatch()
+
+            batch.runMulti { batch2 ->
+                val batch2 = batch.getCurrentBatch()
+
+                batch1.`should be equal to`(batch2)
+                // it'll hard to implement to re-use transaction logic
+            }
+        }
     }
 
     @Test
